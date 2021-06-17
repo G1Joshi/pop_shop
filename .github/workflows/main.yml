@@ -1,0 +1,38 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v1
+      - run: |
+          flutter doctor
+          flutter format .
+          flutter analyze
+          flutter test
+
+  build:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v1
+      - run: |
+          flutter pub get
+          flutter build web
+          git config user.email joshijeevan98@gmail.com
+          git config user.name G1Joshi
+          git checkout -b gh-pages
+          git push origin gh-pages -f
+          sed -i '/base href/d' build/web/index.html
+          git add build/web/ -f
+          git commit -m "application"
+          git push origin `git subtree split --prefix=build/web/`:gh-pages -f
